@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ELRS 接收机双输出共享：Arduino与Betaflight的飞行-地面混合控制架构.md</title>
+<style>
+    :root { color-scheme: light dark; --toc-width: 300px; }
+    html, body { height: 100%; }
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", "Microsoft YaHei", Arial, sans-serif;
+        line-height: 1.6;
+        background: #fff; color: #000;
+    }
+
+    #toggle-toc {
+      position: fixed;
+      top: 10px;       /* 固定像素位置 */
+      left: 10px;      /* 固定像素位置 */
+      z-index: 3000;
+      font-size: 14px;     /* 固定像素大小 */
+      padding: 6px 12px;   /* 固定像素内边距 */
+      background: #007acc;
+      color: #fff;
+      border: none;
+      border-radius: 6px;   /* 固定像素圆角 */
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    }
+
+
+    /* 固定目录：实际宽度以 offsetWidth 为准（JS 同步到 --toc-width） */
+    nav {
+        position: fixed; top: 0; left: 0; bottom: 0;
+        width: var(--toc-width);
+        box-sizing: border-box; /* 包含边框与滚动条 */
+        overflow-y: auto;
+        padding: 48px 1rem 1rem 1rem; /* 顶部留出按钮空间 */
+        border-right: 1px solid #ddd;
+        background: #f9f9f9;
+        z-index: 2000;
+        transform: translateX(0);
+        transition: transform .25s ease;
+    }
+    body.toc-collapsed nav { transform: translateX(-100%); }
+
+    /* 正文：以 padding-left 避开目录，永不被覆盖；左右各留 1em */
+    main {
+        min-height: 100%;
+        box-sizing: border-box;
+        padding: 2rem 1em;
+        padding-left: calc(var(--toc-width) + 1em); /* 让出目录宽度 + 1em */
+
+        transition: padding-left .25s ease;
+    }
+    body.toc-collapsed main { padding-left: 1em; } /* 收起目录时全屏 */
+
+    /* 目录树样式与折叠箭头 */
+    .toc { list-style: none; padding-left: 0; margin: 0; }
+    .toc ul { list-style: none; padding-left: 1rem; margin: 0; }
+    .toc li.has-children > a::before {
+        content: '▸'; display: inline-block; margin-right: 6px;
+        transform: rotate(0deg); transition: transform .2s ease;
+    }
+    .toc li.open > a::before { transform: rotate(90deg); }
+    .toc a {
+        display: inline-block; padding: 4px 0;
+        color: inherit; text-decoration: none;
+        word-break: break-word;
+    }
+
+    /* 内容样式 */
+    img { max-width: 100%; height: auto; display: block; margin: 1rem auto; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    /* 表格样式 */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5em;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+
+    /* 暗色模式下的表格样式 */
+    @media (prefers-color-scheme: dark) {
+      th, td { border-color: #555; }
+      th { background-color: #222; color: #eee; }
+    }
+
+    /* 暗色模式 */
+    @media (prefers-color-scheme: dark) {
+        body { background: #121212; color: #e0e0e0; }
+        nav { background: #1e1e1e; border-right: 1px solid #444; }
+        pre { background: #1e1e1e; color: #e0e0e0; }
+        code { color: #ffcc66; }
+        #toggle-toc { background: #444; }
+    }
+
+    /* 小屏：目录抽屉覆盖，正文不缩进；按钮仍固定 */
+    @media (max-width: 768px) {
+        main { padding-left: 1em; }
+        nav { box-shadow: 0 0 12px rgba(0,0,0,.25); padding-top: 48px; }
+    }
+    </style>
+</head>
+<body class="toc-expanded">
+<button id="toggle-toc">☰ 目录</button>
+<nav><ul class='toc'><li><a href='#elrs-arduinobetaflight'>ELRS 接收机双输出共享：Arduino与Betaflight的飞行/地面混合控制架构</a></li><ul><li><a href='#_1'>📌 硬件结构</a></li><li><a href='#arduinocrsf'>测试代码：Arduino读取CRSF通道的值</a></li><li><a href='#pca9685'>舵机控制：<strong>PCA9685舵机扩展板</strong></a></li><ul><li><a href='#pca9685-03-pwm'><strong>PCA9685 通道 0–3</strong> → 四个地面电机驱动 PWM 输入</a></li><li><a href='#_2'>控制逻辑：</a></li></ul><li><a href='#_3'>完整代码（带详细注释）</a></li><li><a href='#_4'>📌 接线说明</a></li><li><a href='#_5'>补充</a></li></ul></ul></nav>
+<main><h1 id="elrs-arduinobetaflight">ELRS 接收机双输出共享：Arduino与Betaflight的飞行/地面混合控制架构</h1>
+<p>接收机 TX → 飞控 RX + Arduino RX；接收机 RX ← 飞控 TX</p>
+<ul>
+<li>
+<p><strong>一个 ELRS 接收机</strong>，它的 <strong>TX 信号线</strong>同时接到 <strong>Betaflight 飞控的 UART RX</strong> 和 <strong>Arduino 的 UART RX</strong>。</p>
+</li>
+<li>
+<p><strong>飞控</strong>继续和接收机保持双向通信（接收机 RX ↔ 飞控 TX），这样飞控还能拿到完整的 CRSF 通道和遥测。</p>
+</li>
+<li>
+<p><strong>Arduino</strong>只监听接收机 TX，不往回发数据，就不会和飞控冲突。</p>
+</li>
+<li>
+<p><strong>逻辑</strong>：</p>
+<ul>
+<li>飞控 ARM → 正常飞行，Arduino只是旁听。</li>
+<li>飞控 DISARM → Arduino读取通道，驱动地面电机和舵机</li>
+</ul>
+</li>
+</ul>
+<p>✅ 这就是最简单的实现方式：一个接收机同时服务飞控和 Arduino，飞控负责飞行闭环，Arduino在飞控锁定时接管通道做地面模式。</p>
+<h2 id="_1">📌 硬件结构</h2>
+<ul>
+<li><strong>ELRS 接收机</strong>：输出 CRSF 协议数据。</li>
+<li><strong>Betaflight 飞控 (BF)</strong>：通过 UART 与接收机双工通信（既接收通道，又回传遥测）。</li>
+<li><strong>Arduino Mega2560</strong>：并联监听接收机 TX，只读取通道数据，不参与回传。</li>
+<li><strong>PCA9685</strong>：由 Arduino 控制，用于驱动地面电机和舵机。</li>
+<li><strong>舵机 ×4</strong>：左右收放 + 左右锁定。</li>
+<li><strong>地面电机 ×4</strong>：差速驱动。</li>
+<li><strong>飞行电机 ×4 + ESC</strong>：由 Betaflight 控制。</li>
+</ul>
+<hr />
+<h2 id="arduinocrsf">测试代码：Arduino读取CRSF通道的值</h2>
+<pre><code>#include &lt;AlfredoCRSF.h&gt;   // 使用 CRSF 库
+
+AlfredoCRSF crsf(Serial1); // Mega2560 的 Serial1 (TX1=18, RX1=19)
+
+#define CH_MODE     6   // 模式拨杆通道索引
+#define CH_THROTTLE 0   // 油门通道索引
+
+void setup() {
+  Serial.begin(115200);          // 用于调试输出
+  Serial1.begin(420000);         // CRSF 波特率
+  crsf.begin();
+}
+
+void loop() {
+  crsf.loop(); // 解析接收机数据
+
+  // 读取通道值（库通常返回 1000~2000）
+  int mode     = crsf.getChannel(CH_MODE);
+  int throttle = crsf.getChannel(CH_THROTTLE);
+
+  // 打印到串口监视器
+  Serial.print(&quot;Mode channel: &quot;);
+  Serial.print(mode);
+  Serial.print(&quot; | Throttle: &quot;);
+  Serial.println(throttle);
+
+  delay(50); // 每 50ms 打印一次
+}
+</code></pre>
+<hr />
+<h2 id="pca9685">舵机控制：<strong>PCA9685舵机扩展板</strong></h2>
+<h3 id="pca9685-03-pwm"><strong>PCA9685 通道 0–3</strong> → 四个地面电机驱动 PWM 输入</h3>
+<ol>
+<li><strong>PCA9685 通道 4</strong> → 左侧收放舵机</li>
+<li><strong>PCA9685 通道 5</strong> → 右侧收放舵机</li>
+<li><strong>PCA9685 通道 6</strong> → 左侧锁定舵机</li>
+<li><strong>PCA9685 通道 7</strong> → 右侧锁定舵机</li>
+<li><strong>PCA9685 V+</strong> → 独立 5–6V BEC（为舵机/电机供电）</li>
+<li><strong>PCA9685 VCC</strong> → Arduino 5V</li>
+<li><strong>SDA/SCL</strong> → Arduino Mega2560 的 SDA (Pin 20) / SCL (Pin 21)</li>
+<li><strong>GND</strong> → 共地（Arduino、飞控、接收机、BEC 全部共地）</li>
+</ol>
+<h3 id="_2">控制逻辑：</h3>
+<ul>
+<li>
+<p><strong>开关 A (ARM)</strong>：飞控解锁/上锁。</p>
+</li>
+<li>
+<p><strong>开关 B (MODE)</strong>：形态切换（飞行 ↔ 地面）。</p>
+</li>
+<li>
+<p><strong>舵机</strong>：左右各一个收放舵机 + 左右各一个锁定舵机（共四个）。</p>
+</li>
+<li>
+<p><strong>地面电机</strong>：四个电机差速驱动。</p>
+</li>
+<li>
+<p><strong>逻辑顺序</strong>：</p>
+<ul>
+<li>飞行模式：飞控 ARM，Arduino不干预。</li>
+<li>切换到地面模式：先锁定飞控 → 舵机放下/解锁 → Arduino接管油门/转向驱动地面电机。</li>
+<li>切换回飞行模式：舵机收起/锁定 → 再允许飞控 ARM → 飞控接管飞行。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="_3">完整代码（带详细注释）</h2>
+<pre><code>#include &lt;AlfredoCRSF.h&gt;              // CRSF 库，用于读取 ELRS 接收机通道
+#include &lt;Adafruit_PWMServoDriver.h&gt;  // PCA9685 库，用于控制舵机和地面电机
+
+// 创建对象
+AlfredoCRSF crsf(Serial1);            // ELRS 接收机接到 Mega2560 的 Serial1 (RX1=19, TX1=18)
+Adafruit_PWMServoDriver pca = Adafruit_PWMServoDriver(0x40); // PCA9685 I2C 地址通常是 0x40
+
+// 通道索引（根据你的遥控器映射）
+#define CH_ARM      5   // 开关 A：飞控 ARM/锁定
+#define CH_MODE     6   // 开关 B：形态切换（飞行/地面）
+#define CH_THROTTLE 0   // 油门通道
+#define CH_STEER    1   // 转向通道
+
+// 舵机位置（根据机械结构调整）
+#define SERVO_GEAR_UP_US   1000   // 收起轮子
+#define SERVO_GEAR_DOWN_US 2000   // 放下轮子
+#define SERVO_LOCK_ON_US   1000   // 锁定
+#define SERVO_LOCK_OFF_US  2000   // 解锁
+
+// 延时保证舵机动作完成
+#define SEQ_DELAY_MS 800
+
+// 当前形态状态
+enum ShapeState { SHAPE_FLY, SHAPE_GROUND };
+ShapeState currentShape = SHAPE_FLY;
+
+// ---------------- 工具函数 ----------------
+
+// 将微秒转换为 PCA9685 的 tick 值
+uint16_t usToTicks(int us) {
+  float duty = constrain(us, 500, 2500); // 限制范围
+  return (uint16_t)(duty / 20000.0f * 4096.0f);
+}
+
+// PCA 输出 PWM
+void pcaWriteUs(uint8_t channel, int us) {
+  pca.setPWM(channel, 0, usToTicks(us));
+}
+
+// 舵机动作（四个舵机：左右收放 + 左右锁定）
+void setGearUp() {
+  pcaWriteUs(4, SERVO_GEAR_UP_US);   // 左收放
+  pcaWriteUs(5, SERVO_GEAR_UP_US);   // 右收放
+}
+void setGearDown() {
+  pcaWriteUs(4, SERVO_GEAR_DOWN_US); // 左收放
+  pcaWriteUs(5, SERVO_GEAR_DOWN_US); // 右收放
+}
+void setLockOn() {
+  pcaWriteUs(6, SERVO_LOCK_ON_US);   // 左锁定
+  pcaWriteUs(7, SERVO_LOCK_ON_US);   // 右锁定
+}
+void setLockOff() {
+  pcaWriteUs(6, SERVO_LOCK_OFF_US);  // 左锁定
+  pcaWriteUs(7, SERVO_LOCK_OFF_US);  // 右锁定
+}
+
+// 地面电机控制
+void stopGroundMotors() {
+  for (int ch=0; ch&lt;4; ch++) pcaWriteUs(ch, 1000); // 停止值
+}
+
+void driveGroundMotors(int throttle, int steer) {
+  // 简单差速：左右电机基础上叠加转向偏置
+  int steerOffset = map(steer, 1000, 2000, -400, 400);
+  int left  = throttle - steerOffset;
+  int right = throttle + steerOffset;
+  left  = constrain(left, 1100, 1900);
+  right = constrain(right, 1100, 1900);
+  pcaWriteUs(0, left);   // 左前
+  pcaWriteUs(1, right);  // 右前
+  pcaWriteUs(2, left);   // 左后
+  pcaWriteUs(3, right);  // 右后
+}
+
+// ---------------- 初始化 ----------------
+void setup() {
+  Serial.begin(115200);               // 调试输出
+  Serial1.begin(420000);              // CRSF 波特率
+  crsf.begin();
+
+  pca.begin();
+  pca.setPWMFreq(50);                 // 舵机/电机 50Hz
+
+  // 初始状态：飞行形态，舵机收起锁定
+  setGearUp();
+  setLockOn();
+  stopGroundMotors();
+}
+
+// ---------------- 主循环 ----------------
+void loop() {
+  crsf.loop(); // 解析接收机数据
+
+  // 读取通道
+  int armSwitch  = crsf.getChannel(CH_ARM);
+  int modeSwitch = crsf.getChannel(CH_MODE);
+  int throttle   = crsf.getChannel(CH_THROTTLE);
+  int steer      = crsf.getChannel(CH_STEER);
+
+  bool armOn = (armSwitch &gt; 1600);       // ARM 开关判定
+  bool modeGround = (modeSwitch &lt; 1400); // 形态开关判定
+
+  if (armOn &amp;&amp; currentShape == SHAPE_FLY) {
+    // 飞行模式：飞控接管，Arduino不干预
+    stopGroundMotors();
+  } else if (!armOn &amp;&amp; modeGround &amp;&amp; currentShape == SHAPE_FLY) {
+    // 切换到地面模式：先锁定飞控（armOff），再舵机动作
+    setGearDown();
+    setLockOff();
+    delay(SEQ_DELAY_MS);
+    currentShape = SHAPE_GROUND;
+  } else if (!armOn &amp;&amp; !modeGround &amp;&amp; currentShape == SHAPE_GROUND) {
+    // 切换回飞行模式：舵机收回 → 再允许飞控 ARM
+    setGearUp();
+    setLockOn();
+    delay(SEQ_DELAY_MS);
+    currentShape = SHAPE_FLY;
+  }
+
+  // 地面模式下驱动电机
+  if (currentShape == SHAPE_GROUND) {
+    driveGroundMotors(throttle, steer);
+  }
+}
+</code></pre>
+<hr />
+<h2 id="_4">📌 接线说明</h2>
+<ul>
+<li><strong>接收机 TX</strong> → Arduino RX1 (Pin 19) + 飞控 UART RX</li>
+<li><strong>接收机 RX</strong> → 飞控 UART TX</li>
+<li><strong>Arduino SDA (Pin 20)</strong> → PCA9685 SDA</li>
+<li><strong>Arduino SCL (Pin 21)</strong> → PCA9685 SCL</li>
+<li><strong>Arduino 5V</strong> → PCA9685 VCC</li>
+<li><strong>PCA9685 V+</strong> → 独立 5–6V BEC（供舵机/电机）</li>
+<li><strong>PCA9685 GND</strong> → 共地（Arduino、飞控、接收机、BEC）</li>
+<li><strong>PCA9685 通道 0–3</strong> → 四个地面电机驱动</li>
+<li><strong>PCA9685 通道 4–5</strong> → 左右收放舵机</li>
+<li><strong>PCA9685 通道 6–7</strong> → 左右锁定舵机</li>
+</ul>
+<hr />
+<h2 id="_5">补充</h2>
+<p><strong>Arduino I²C 扫描器代码</strong>，上传到 Mega2560 后，它会自动扫描所有连接在 I²C 总线上的设备，并在串口监视器里打印出它们的地址。这样你就能确认 PCA9685 的实际地址是不是 <code>0x40</code>。</p>
+<pre><code>#include &lt;Wire.h&gt;
+
+void setup() {
+  Wire.begin();                // 初始化 I²C
+  Serial.begin(115200);        // 打开串口监视器
+  while (!Serial);             // 等待串口准备好
+  Serial.println(&quot;\nI2C Scanner 正在运行...&quot;);
+}
+
+void loop() {
+  byte error, address;
+  int nDevices = 0;
+
+  Serial.println(&quot;正在扫描 I2C 总线...&quot;);
+
+  for (address = 1; address &lt; 127; address++) {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0) {
+      Serial.print(&quot;发现设备，地址: 0x&quot;);
+      if (address &lt; 16) Serial.print(&quot;0&quot;);
+      Serial.print(address, HEX);
+      Serial.println(&quot; !&quot;);
+      nDevices++;
+    } else if (error == 4) {
+      Serial.print(&quot;未知错误，地址: 0x&quot;);
+      if (address &lt; 16) Serial.print(&quot;0&quot;);
+      Serial.println(address, HEX);
+    }
+  }
+
+  if (nDevices == 0) {
+    Serial.println(&quot;没有发现 I2C 设备\n&quot;);
+  } else {
+    Serial.println(&quot;扫描完成\n&quot;);
+  }
+
+  delay(5000); // 每 5 秒扫描一次
+}
+</code></pre>
+<ol>
+<li>把 PCA9685 接到 Arduino Mega2560 的 <strong>SDA (Pin 20)</strong> 和 <strong>SCL (Pin 21)</strong>。</li>
+<li>上传代码到 Mega2560。</li>
+<li>打开串口监视器（115200 baud）。</li>
+</ol>
+<hr /></main>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const body = document.body;
+        const btn = document.getElementById("toggle-toc");
+        const nav = document.querySelector("nav");
+        const root = document.documentElement;
+
+        // 根据目录实际宽度同步 CSS 变量，确保正文让出空间足够
+        function syncTocWidth() {
+            // 使用 offsetWidth 包括边框与滚动条宽度
+            const w = nav.offsetWidth;
+            // 最小宽度保护，防止字体尚未加载时值为 0
+            const width = Math.max(w, 240);
+            root.style.setProperty('--toc-width', width + 'px');
+        }
+
+        // 初始展开并同步宽度
+        body.classList.add("toc-expanded");
+        // 多次触发，覆盖字体加载与渲染抖动
+        requestAnimationFrame(syncTocWidth);
+        setTimeout(syncTocWidth, 0);
+        setTimeout(syncTocWidth, 200);
+        window.addEventListener('resize', syncTocWidth);
+
+        // 折叠/展开切换，同时再次同步宽度
+        btn.addEventListener("click", function() {
+            body.classList.toggle("toc-collapsed");
+            body.classList.toggle("toc-expanded");
+            // 展开时才需要让出空间；收起后 main 已用 1em
+            syncTocWidth();
+        });
+
+        // 懒加载图片
+        const imgs = document.querySelectorAll("img[data-src]");
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    observer.unobserve(img);
+                }
+            });
+        }, { rootMargin: "200px" });
+        imgs.forEach(img => observer.observe(img));
+
+        // 目录折叠：仅有子项的 li 可折叠
+        document.querySelectorAll(".toc li").forEach(li => {
+            const childUl = li.querySelector(":scope > ul");
+            if (childUl) {
+                li.classList.add("has-children");
+                const a = li.querySelector(":scope > a");
+                li.addEventListener("click", function(e) {
+                    if (e.target.tagName.toLowerCase() === "a") return;
+                    li.classList.toggle("open");
+                });
+                if (a) a.addEventListener("click", function() { li.classList.toggle("open"); });
+            }
+        });
+    });
+    </script>
+    
+</body>
+</html>
