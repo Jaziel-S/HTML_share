@@ -50,29 +50,60 @@
       color: #2980b9;
     }
 
-    /* 🌙 自动夜间模式 */
-    @media (prefers-color-scheme: dark) {
+    /* 夜间模式 */
+    body.dark {
+      background-color: #1e1e1e;
+      color: #ddd;
+    }
+    body.dark .menu-item {
+      color: #ddd;
+    }
+    body.dark a {
+      color: #ddd;
+    }
+    body.dark a:hover {
+      color: #66ccff;
+    }
+    body.dark .arrow {
+      color: #aaa;
+    }
+
+    /* 响应式适配 */
+    @media (max-width: 600px) {
       body {
-        background-color: #1e1e1e;
-        color: #ddd;
+        margin: 10px;
+      }
+      h1 {
+        font-size: 20px;
       }
       .menu-item {
-        color: #ddd;
+        font-size: 16px;
       }
       a {
-        color: #ddd;
+        font-size: 14px;
       }
-      a:hover {
-        color: #66ccff;
-      }
-      .arrow {
-        color: #aaa;
-      }
+    }
+
+    /* 夜间模式按钮 */
+    #toggle-dark {
+      display: block;
+      margin: 10px auto;
+      padding: 8px 16px;
+      background: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #toggle-dark:hover {
+      background: #1f6391;
     }
   </style>
 </head>
 <body>
   <h1>Jaziel_分享的界面_菜单导航</h1>
+  <button id="toggle-dark">切换夜间模式</button>
   <ul>
     <li>
       <span class="menu-item" onclick="toggleMenu('research', this)">研究<span class="arrow">▼</span></span>
@@ -109,6 +140,26 @@
         arrow.textContent = "▲";
       }
     }
+
+    // 手动夜间模式切换 + 状态记忆
+    const toggleBtn = document.getElementById("toggle-dark");
+    toggleBtn.addEventListener("click", function() {
+      document.body.classList.toggle("dark");
+      // 保存用户选择到 localStorage
+      if (document.body.classList.contains("dark")) {
+        localStorage.setItem("theme", "dark");
+      } else {
+        localStorage.setItem("theme", "light");
+      }
+    });
+
+    // 页面加载时读取用户选择
+    window.onload = function() {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+      }
+    };
   </script>
 </body>
 </html>
