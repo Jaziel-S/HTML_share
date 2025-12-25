@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>分级菜单示例</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    li {
+      margin: 5px 0;
+    }
+    .submenu {
+      display: none; /* 默认隐藏子菜单 */
+      margin-left: 20px;
+    }
+    .menu-item {
+      cursor: pointer;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .menu-item:hover {
+      color: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <h1>分级菜单导航示例</h1>
+  <ul>
+    <li>
+      <span class="menu-item" onclick="toggleMenu('research')">研究 ▼</span>
+      <ul id="research" class="submenu">
+        <li><a href="research/project1.html">项目 1：材料仿真</a></li>
+        <li><a href="research/project2.html">项目 2：车辆工程</a></li>
+      </ul>
+    </li>
+    <li>
+      <span class="menu-item" onclick="toggleMenu('reports')">报告 ▼</span>
+      <ul id="reports" class="submenu">
+        <li><a href="reports/report1.html">报告 1：实验结果</a></li>
+        <li><a href="reports/report2.html">报告 2：分析总结</a></li>
+      </ul>
+    </li>
+    <li>
+      <span class="menu-item" onclick="toggleMenu('about')">关于我 ▼</span>
+      <ul id="about" class="submenu">
+        <li><a href="about.html">个人简介</a></li>
+        <li><a href="contact.html">联系方式</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <script>
+    function toggleMenu(id) {
+      const submenu = document.getElementById(id);
+      submenu.style.display = (submenu.style.display === "block") ? "none" : "block";
+    }
+  </script>
+</body>
+</html>
