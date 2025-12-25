@@ -23,32 +23,19 @@
     li {
       margin: 8px 0;
     }
-
-    /* 折叠动画 */
     .submenu {
-      max-height: 0;
-      overflow: hidden;
+      display: none;
       margin-left: 20px;
-      transition: max-height 0.4s ease;
     }
-    .submenu.open {
-      max-height: 500px; /* 足够容纳子菜单 */
-    }
-
     .menu-item {
       cursor: pointer;
       font-weight: bold;
       color: #2c3e50;
       display: inline-block;
-      transition: transform 0.2s ease, text-shadow 0.2s ease;
     }
-    /* 悬浮效果 */
     .menu-item:hover {
       color: #2980b9;
-      transform: scale(1.05);
-      text-shadow: 0 0 6px rgba(41,128,185,0.6);
     }
-
     .arrow {
       margin-left: 5px;
       font-size: 12px;
@@ -57,12 +44,10 @@
     a {
       text-decoration: none;
       color: #2c3e50;
-      transition: transform 0.2s ease, color 0.2s ease;
     }
     a:hover {
       text-decoration: underline;
       color: #2980b9;
-      transform: translateX(3px);
     }
 
     /* 🌙 自动夜间模式 */
@@ -90,24 +75,24 @@
   <h1>Jaziel_分享的界面_菜单导航</h1>
   <ul>
     <li>
-      <span class="menu-item" onclick="toggleMenu('research', this)">研究<span class="arrow">▼</span></span>
+      <span class="menu-item" onclick="toggleMenu('research', this)"> 研究 <span class="arrow">▼</span></span>
       <ul id="research" class="submenu">
-        <li><a href="ABAQUS_2020常见问题_reader.html" target="_blank" rel="noopener noreferrer">ABAQUS_2020常见问题</a></li>
-        <li><a href="Dynaform5.9.4_B柱冲压仿真_reader.html" target="_blank" rel="noopener noreferrer">Dynaform5.9.4_B柱冲压仿真</a></li>
+        <li><a href="ABAQUS_2020常见问题_reader.html"  target="_blank" rel="noopener noreferrer" > ABAQUS_2020常见问题 </a></li>
+        <li><a href="Dynaform5.9.4_B柱冲压仿真_reader.html"  target="_blank" rel="noopener noreferrer" > Dynaform5.9.4_B柱冲压仿真 </a></li>
       </ul>
     </li>
     <li>
-      <span class="menu-item" onclick="toggleMenu('reports', this)">笔记<span class="arrow">▼</span></span>
+      <span class="menu-item" onclick="toggleMenu('reports', this)"> 笔记 <span class="arrow">▼</span></span>
       <ul id="reports" class="submenu">
-        <li><a href="ELRS 接收机双输出共享：Arduino与Betaflight的飞行-地面混合控制架构_reader.html" target="_blank" rel="noopener noreferrer">elrs+arduino无人机控制方案</a></li>
+        <li><a href="ELRS 接收机双输出共享：Arduino与Betaflight的飞行-地面混合控制架构_reader.html"  target="_blank" rel="noopener noreferrer" > elrs+arduino无人机控制方案 </a></li>
       </ul>
     </li>
     <li>
-      <span class="menu-item" onclick="toggleMenu('about', this)">其他<span class="arrow">▼</span></span>
+      <span class="menu-item" onclick="toggleMenu('about', this)"> 其他 <span class="arrow">▼</span></span>
       <ul id="about" class="submenu">
-        <li><a href="index.html" target="_blank" rel="noopener noreferrer">原地tp</a></li>
-        <li><a href="https://github.com/Jaziel-S/md2html.git" target="_blank" rel="noopener noreferrer">Markdown转HTML的工具</a></li>
-        <li><a href="https://github.com/Jaziel-S/HTML_share.git" target="_blank" rel="noopener noreferrer">HTML源文件仓库</a></li>
+        <li><a href="index.html"> 原地tp </a></li>
+        <li><a href="https://github.com/Jaziel-S/md2html.git" rel="noopener noreferrer" > Markdown转HTML的工具 </a></li>
+        <li><a href="https://github.com/Jaziel-S/HTML_share.git"  target="_blank" rel="noopener noreferrer" > HTML源文件仓库 </a></li>
       </ul>
     </li>
   </ul>
@@ -116,8 +101,13 @@
     function toggleMenu(id, element) {
       const submenu = document.getElementById(id);
       const arrow = element.querySelector(".arrow");
-      submenu.classList.toggle("open");
-      arrow.textContent = submenu.classList.contains("open") ? "▲" : "▼";
+      if (submenu.style.display === "block") {
+        submenu.style.display = "none";
+        arrow.textContent = "▼";
+      } else {
+        submenu.style.display = "block";
+        arrow.textContent = "▲";
+      }
     }
   </script>
 </body>
