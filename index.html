@@ -2,12 +2,11 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>分级菜单示例</title>
+  <title> Index </title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
+      margin: 20px;
     }
     ul {
       list-style-type: none;
@@ -18,7 +17,7 @@
     }
     .submenu {
       display: none; /* 默认隐藏子菜单 */
-      margin-left: 20px;
+      margin-left: 20px; /* 缩进让层级更清晰 */
     }
     .menu-item {
       cursor: pointer;
@@ -28,38 +27,49 @@
     .menu-item:hover {
       color: #2980b9;
     }
+    .arrow {
+      margin-left: 5px;
+      font-size: 12px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
-  <h1>分级菜单导航示例</h1>
+  <h1> Jaziel_分享的界面_菜单导航 </h1>
   <ul>
     <li>
-      <span class="menu-item" onclick="toggleMenu('research')">研究 ▼</span>
+      <span class="menu-item" onclick="toggleMenu('research', this)"> 研究 <span class="arrow">▼</span></span>
       <ul id="research" class="submenu">
-        <li><a href="research/project1.html">项目 1：材料仿真</a></li>
-        <li><a href="research/project2.html">项目 2：车辆工程</a></li>
+        <li><a href="ABAQUS_2020常见问题_reader.html"> ABAQUS_2020常见问题 </a></li>
+        <li><a href="Dynaform5.9.4_B柱冲压仿真_reader.html"> Dynaform5.9.4_B柱冲压仿真 </a></li>
       </ul>
     </li>
     <li>
-      <span class="menu-item" onclick="toggleMenu('reports')">报告 ▼</span>
+      <span class="menu-item" onclick="toggleMenu('reports', this)"> 报告 <span class="arrow">▼</span></span>
       <ul id="reports" class="submenu">
-        <li><a href="reports/report1.html">报告 1：实验结果</a></li>
-        <li><a href="reports/report2.html">报告 2：分析总结</a></li>
+        <li><a href="ELRS 接收机双输出共享：Arduino与Betaflight的飞行-地面混合控制架构_reader.html"> elrs+arduino无人机控制方案 </a></li>
       </ul>
     </li>
     <li>
-      <span class="menu-item" onclick="toggleMenu('about')">关于我 ▼</span>
+      <span class="menu-item" onclick="toggleMenu('about', this)"> 其他 <span class="arrow">▼</span></span>
       <ul id="about" class="submenu">
-        <li><a href="about.html">个人简介</a></li>
-        <li><a href="contact.html">联系方式</a></li>
+        <li><a href="about.html"> 使用案例 </a></li>
+        <a href="https://github.com/Jaziel-S/md2html.git"> Markdown转HTML的工具 </a>
       </ul>
     </li>
   </ul>
 
   <script>
-    function toggleMenu(id) {
+    function toggleMenu(id, element) {
       const submenu = document.getElementById(id);
-      submenu.style.display = (submenu.style.display === "block") ? "none" : "block";
+      const arrow = element.querySelector(".arrow");
+      if (submenu.style.display === "block") {
+        submenu.style.display = "none";
+        arrow.textContent = "▼"; // 收起时箭头向下
+      } else {
+        submenu.style.display = "block";
+        arrow.textContent = "▲"; // 展开时箭头向上
+      }
     }
   </script>
 </body>
