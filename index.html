@@ -2,27 +2,36 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title> Index </title>
+  <title>Index</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      background-color: #f4f4f4;
+      color: #2c3e50;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    h1 {
+      text-align: center;
     }
     ul {
       list-style-type: none;
       padding-left: 0;
+      max-width: 600px;
+      margin: auto;
     }
     li {
-      margin: 5px 0;
+      margin: 8px 0;
     }
     .submenu {
-      display: none; /* 默认隐藏子菜单 */
-      margin-left: 20px; /* 缩进让层级更清晰 */
+      display: none;
+      margin-left: 20px;
     }
     .menu-item {
       cursor: pointer;
       font-weight: bold;
       color: #2c3e50;
+      display: inline-block;
     }
     .menu-item:hover {
       color: #2980b9;
@@ -32,29 +41,58 @@
       font-size: 12px;
       color: #555;
     }
+    a {
+      text-decoration: none;
+      color: #2c3e50;
+    }
+    a:hover {
+      text-decoration: underline;
+      color: #2980b9;
+    }
+
+    /* 🌙 自动夜间模式 */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1e1e1e;
+        color: #ddd;
+      }
+      .menu-item {
+        color: #ddd;
+      }
+      a {
+        color: #ddd;
+      }
+      a:hover {
+        color: #66ccff;
+      }
+      .arrow {
+        color: #aaa;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1> Jaziel_分享的界面_菜单导航 </h1>
+  <h1>Jaziel_分享的界面_菜单导航</h1>
   <ul>
     <li>
-      <span class="menu-item" onclick="toggleMenu('research', this)"> 研究 <span class="arrow">▼</span></span>
+      <span class="menu-item" onclick="toggleMenu('research', this)">研究<span class="arrow">▼</span></span>
       <ul id="research" class="submenu">
-        <li><a href="ABAQUS_2020常见问题_reader.html"> ABAQUS_2020常见问题 </a></li>
-        <li><a href="Dynaform5.9.4_B柱冲压仿真_reader.html"> Dynaform5.9.4_B柱冲压仿真 </a></li>
+        <li><a href="ABAQUS_2020常见问题_reader.html">ABAQUS_2020常见问题</a></li>
+        <li><a href="Dynaform5.9.4_B柱冲压仿真_reader.html">Dynaform5.9.4_B柱冲压仿真</a></li>
       </ul>
     </li>
     <li>
-      <span class="menu-item" onclick="toggleMenu('reports', this)"> 报告 <span class="arrow">▼</span></span>
+      <span class="menu-item" onclick="toggleMenu('reports', this)">报告<span class="arrow">▼</span></span>
       <ul id="reports" class="submenu">
-        <li><a href="ELRS 接收机双输出共享：Arduino与Betaflight的飞行-地面混合控制架构_reader.html"> elrs+arduino无人机控制方案 </a></li>
+        <li><a href="ELRS 接收机双输出共享：Arduino与Betaflight的飞行-地面混合控制架构_reader.html">elrs+arduino无人机控制方案</a></li>
       </ul>
     </li>
     <li>
-      <span class="menu-item" onclick="toggleMenu('about', this)"> 其他 <span class="arrow">▼</span></span>
+      <span class="menu-item" onclick="toggleMenu('about', this)">其他<span class="arrow">▼</span></span>
       <ul id="about" class="submenu">
-        <li><a href="about.html"> 使用案例 </a></li>
-        <a href="https://github.com/Jaziel-S/md2html.git"> Markdown转HTML的工具 </a>
+        <li><a href="about.html">使用案例</a></li>
+        <li><a href="https://github.com/Jaziel-S/md2html.git">Markdown转HTML的工具</a></li>
+        <li><a href="https://github.com/Jaziel-S/HTML_share.git">HTML源文件仓库</a></li>
       </ul>
     </li>
   </ul>
@@ -65,10 +103,10 @@
       const arrow = element.querySelector(".arrow");
       if (submenu.style.display === "block") {
         submenu.style.display = "none";
-        arrow.textContent = "▼"; // 收起时箭头向下
+        arrow.textContent = "▼";
       } else {
         submenu.style.display = "block";
-        arrow.textContent = "▲"; // 展开时箭头向上
+        arrow.textContent = "▲";
       }
     }
   </script>
